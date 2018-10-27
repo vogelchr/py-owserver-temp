@@ -44,7 +44,7 @@ class TimestampLogfile:
 
     def update(self, ts=None):
         if ts is None:
-            ts = datetime.datetime.now()
+            ts = datetime.datetime.utcnow()
         self.ts = ts
         newfn = ts.strftime(self.filefmt)
         if newfn != self.fn:
@@ -136,7 +136,7 @@ is onewire address (28.ABCD...), second column is short name.''')
                 print('Cannot read ow sensor %s (%s): %s' % (name, ow, e))
                 continue
 
-        now = datetime.datetime.now()
+        now = datetime.datetime.utcnow()
         lf.update(now)
         if lf.fresh:
             print('#', ' '.join([name for ow, name in sensors]))
