@@ -95,13 +95,28 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', '--filefmt', metavar='FMT',
-                        default='temp_@Y-@m-@d.log',
-                        help='logfile format, like strftime, but with @ [def: temp_@Y-@m-@d.log]')
-    parser.add_argument('-s', '--stdout', action='store_true', default=False,
-                        help='Output log to stdout (e.g. for debugging).')
     parser.add_argument('-t', '--time', type=float, metavar='SEC', default=15,
                         help='Time to sleep between updates, in seconds. [def: 15]')
+
+    grp = parser.add_argument_group('Logfile related.')
+
+    grp.add_argument('-f', '--filefmt', metavar='FMT',
+                     default='temp_@Y-@m-@d.log',
+                     help='''logfile format, like strftime, but with @ instead'
+of %% to make systemd happy.[def: temp_@Y-@m-@d.log]''')
+    grp.add_argument('-S', '--stdout', action='store_true', default=False,
+                     help='Output log to stdout (e.g. for debugging), not to logfile.')
+
+    grp = parser.add_argument_group('InfluxDB Related')
+    grp.add_argument('-i', '--influxdb', metavar='DBNAME', default='heating',
+                     help='Influxdb database to use [def: heating]')
+    grp.add_argument('-m', '--measurement', metavar='MEASNAME', default='heating',
+                     help='Influxdb measurement name to use [def: heating]')
+    grp.add_argument('-s', '--influx-server', metavar='HOST', default='127.0.0.1',
+                     help='Influxdb server address [def: 127.0.0.1]')
+    grp.add_argument('-p', '--influx-port', metavar='PORT', default=8086, type=int,
+                     help='Influxdb server port [def: 8086]')
+
     parser.add_argument('sensorlist',
                         help='''File with temperature sensor list, one sensor
 per line, comments starting with # allowed, empty lines allowed. First column
@@ -118,7 +133,7 @@ is onewire address (28.ABCD...), second column is short name.''')
     lf = NonTSLogfile(sys.stdout) if args.stdout else TimestampLogfile(args.filefmt)
 
     # influxdb
-    iflxdb = InfluxDBClient('localhost', 8086)
+    iflxdb = InfluxDBClient(args.influx_server, args.influx_port)
 
     ownet = pyownet.protocol.proxy()  # default to localhst, that's fine for us
 
@@ -147,13 +162,14 @@ is onewire address (28.ABCD...), second column is short name.''')
 
         try:
             influxdb_json_body = [{
-                'measurement': 'heating',
+                'measurement': args.measurement,
                 'time': ts,
                 'fields': post_data
             }]
-            iflxdb.write_points(influxdb_json_body, database='heating')
+            iflxdb.write_points(influxdb_json_body, database=args.influxdb)
         except Exception as e:
             print('Cannot write data to influxdb: %s' % (e))
+            sys.stdout.flush()
 
         time.sleep(args.time)
 
