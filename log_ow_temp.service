@@ -1,0 +1,13 @@
+[Unit]
+Description=Onewire Temperature Logging
+After=owserver.service
+
+[Service]
+Type=simple
+PrivateTmp=true
+ExecStart=/usr/local/sbin/py-owserver-temp.py -f /var/log/owtemp/temp_@Y-@m-@d.log /usr/local/share/ow_temp_sensors.txt
+Restart=no
+User=ow
+
+[Install]
+WantedBy=multi-user.target
