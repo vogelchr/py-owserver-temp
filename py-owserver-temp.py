@@ -85,7 +85,7 @@ def format_sensorline(sensors_and_names, value_dict):
     arr = list()
     for ow, name in sensors_and_names:
         if not name in value_dict:
-            arr.append('-       ')
+            arr.append('-      ')
         else:
             arr.append('%+7.2f' % value_dict[name])
     return ' '.join(arr)
