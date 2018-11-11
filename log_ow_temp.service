@@ -1,6 +1,7 @@
 [Unit]
 Description=Onewire Temperature Logging
 After=owserver.service
+After=influxdb.service
 
 [Service]
 Type=simple
